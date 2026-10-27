@@ -1,6 +1,4 @@
-import { filterTasks } from "./model.js";
-import { createTaskCard } from "./task-card.js";
-import { TaskStore } from "./state.js";
+import { addTask, advanceTask, filterTasks } from "./model.js";
 function requiredElement(selector) {
     const element = document.querySelector(selector);
     if (!element) {
@@ -15,7 +13,8 @@ const emptyState = requiredElement("#empty-state");
 const summary = requiredElement("#task-summary");
 const message = requiredElement("#form-message");
 const filterButtons = document.querySelectorAll("[data-filter]");
-const taskStore = new TaskStore();
+let tasks = [];
+let activeFilter = "all";
 const statusLabel = {
     todo: "To do",
     "in-progress": "In progress",
@@ -27,16 +26,33 @@ const nextAction = {
     done: "Completed",
 };
 function renderTasks() {
-    const { tasks, filter } = taskStore.getSnapshot();
-    const visibleTasks = filterTasks(tasks, filter);
+    const visibleTasks = filterTasks(tasks, activeFilter);
     list.replaceChildren();
     for (const task of visibleTasks) {
-        list.append(createTaskCard({
-            task,
-            statusLabel: statusLabel[task.status],
-            actionLabel: nextAction[task.status],
-            completedLabel: "is completed",
-        }));
+        const item = document.createElement("li");
+        item.className = "task-item";
+        item.dataset.status = task.status;
+        const marker = document.createElement("span");
+        marker.className = "task-marker";
+        marker.setAttribute("aria-hidden", "true");
+        const content = document.createElement("div");
+        content.className = "task-content";
+        const title = document.createElement("p");
+        title.className = "task-title";
+        title.textContent = task.title;
+        const status = document.createElement("span");
+        status.className = "task-status";
+        status.textContent = statusLabel[task.status];
+        const advanceButton = document.createElement("button");
+        advanceButton.className = "advance-button";
+        advanceButton.type = "button";
+        advanceButton.dataset.taskId = task.id;
+        advanceButton.textContent = nextAction[task.status];
+        advanceButton.disabled = task.status === "done";
+        advanceButton.setAttribute("aria-label", task.status === "done" ? `${task.title} is completed` : `${nextAction[task.status]}: ${task.title}`);
+        content.append(title, status);
+        item.append(marker, content, advanceButton);
+        list.append(item);
     }
     emptyState.hidden = visibleTasks.length > 0;
     const remaining = tasks.filter((task) => task.status !== "done").length;
@@ -53,9 +69,10 @@ form.addEventListener("submit", (event) => {
         input.focus();
         return;
     }
-    taskStore.add(title);
+    tasks = addTask(tasks, title);
     input.value = "";
     message.textContent = "";
+    renderTasks();
     input.focus();
 });
 list.addEventListener("click", (event) => {
@@ -67,7 +84,8 @@ list.addEventListener("click", (event) => {
     if (!taskId) {
         return;
     }
-    taskStore.advance(taskId);
+    tasks = advanceTask(tasks, taskId);
+    renderTasks();
 });
 filterButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -78,12 +96,13 @@ filterButtons.forEach((button) => {
             filter !== "done") {
             throw new Error(`Unsupported task filter: ${filter ?? "(missing)"}`);
         }
-        taskStore.setFilter(filter);
+        activeFilter = filter;
         filterButtons.forEach((filterButton) => {
             const isActive = filterButton === button;
             filterButton.classList.toggle("is-active", isActive);
             filterButton.setAttribute("aria-pressed", String(isActive));
         });
+        renderTasks();
     });
 });
-taskStore.subscribe(renderTasks);
+renderTasks();
