@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f3ed" />
+    <meta
+      name="description"
+      content="A calm, colorful place to keep your next steps moving."
+    />
+    <title>Daymark — a little more done</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Daymark home">
+          <span class="brand-mark" aria-hidden="true">✳</span>
+          <span>daymark</span>
+        </a>
+        <span class="topbar-note">A little more done, every day.</span>
+      </header>
+
+      <section class="tracker" aria-labelledby="page-title">
+        <div class="intro">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> YOUR DAILY SPACE</p>
+          <h1 id="page-title">Make room for<br /><span>what matters.</span></h1>
+          <p class="intro-copy">
+            One small step at a time. Add a task, then keep it moving.
+          </p>
+        </div>
+
+        <form class="add-form" id="task-form">
+          <label class="visually-hidden" for="task-input">Add a task</label>
+          <input
+            id="task-input"
+            name="task"
+            type="text"
+            maxlength="120"
+            placeholder="What would you like to get done?"
+            autocomplete="off"
+            required
+          />
+          <button class="add-button" type="submit">
+            <span aria-hidden="true">+</span>
+            <span>Add task</span>
+          </button>
+        </form>
+        <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+
+        <div class="list-heading">
+          <div>
+            <h2>Your tasks</h2>
+            <p id="task-summary" class="task-summary">A fresh start is a good start.</p>
+          </div>
+          <div class="filters" role="group" aria-label="Filter tasks">
+            <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
+            <button class="filter-button" type="button" data-filter="todo" aria-pressed="false">To do</button>
+            <button class="filter-button" type="button" data-filter="in-progress" aria-pressed="false">In progress</button>
+            <button class="filter-button" type="button" data-filter="done" aria-pressed="false">Done</button>
+          </div>
+        </div>
+
+        <ul class="task-list" id="task-list" aria-label="Tasks"></ul>
+        <div class="empty-state" id="empty-state">
+          <span class="empty-icon" aria-hidden="true">✦</span>
+          <p class="empty-title">Your list is wide open.</p>
+          <p class="empty-copy">Add a task above and give it a Daymark.</p>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span>Small steps count.</span>
+        <span aria-hidden="true">✳</span>
+      </footer>
+    </main>
+  </body>
+</html>
