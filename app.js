@@ -1,6 +1,7 @@
 import { filterTasks } from "./model.js";
 import { createTaskCard } from "./task-card.js";
 import { TaskStore } from "./state.js";
+import { bindTaskEvents } from "./task-events.js";
 function requiredElement(selector) {
     const element = document.querySelector(selector);
     if (!element) {
@@ -30,6 +31,11 @@ function renderTasks() {
     const { tasks, filter } = taskStore.getSnapshot();
     const visibleTasks = filterTasks(tasks, filter);
     list.replaceChildren();
+    filterButtons.forEach((button) => {
+        const isActive = button.dataset.filter === filter;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+    });
     for (const task of visibleTasks) {
         list.append(createTaskCard({
             task,
@@ -45,45 +51,14 @@ function renderTasks() {
             ? "A fresh start is a good start."
             : `${remaining} ${remaining === 1 ? "task" : "tasks"} left · ${tasks.length} total`;
 }
-form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const title = input.value.trim();
-    if (title.length === 0) {
-        message.textContent = "Give your task a name before adding it.";
-        input.focus();
-        return;
-    }
-    taskStore.add(title);
-    input.value = "";
-    message.textContent = "";
-    input.focus();
-});
-list.addEventListener("click", (event) => {
-    if (!(event.target instanceof Element)) {
-        return;
-    }
-    const button = event.target.closest("[data-task-id]");
-    const taskId = button?.dataset.taskId;
-    if (!taskId) {
-        return;
-    }
-    taskStore.advance(taskId);
-});
-filterButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-        const filter = button.dataset.filter;
-        if (filter !== "all" &&
-            filter !== "todo" &&
-            filter !== "in-progress" &&
-            filter !== "done") {
-            throw new Error(`Unsupported task filter: ${filter ?? "(missing)"}`);
-        }
-        taskStore.setFilter(filter);
-        filterButtons.forEach((filterButton) => {
-            const isActive = filterButton === button;
-            filterButton.classList.toggle("is-active", isActive);
-            filterButton.setAttribute("aria-pressed", String(isActive));
-        });
-    });
-});
 taskStore.subscribe(renderTasks);
+bindTaskEvents({
+    form,
+    input,
+    list,
+    message,
+    filterButtons,
+    onAddTask: (title) => taskStore.add(title),
+    onAdvanceTask: (taskId) => taskStore.advance(taskId),
+    onFilterChange: (filter) => taskStore.setFilter(filter),
+});
