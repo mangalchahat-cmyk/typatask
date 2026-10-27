@@ -1,5 +1,6 @@
-import { addTask, advanceTask, filterTasks } from "./model.js";
+import { filterTasks } from "./model.js";
 import { createTaskCard } from "./task-card.js";
+import { TaskStore } from "./state.js";
 function requiredElement(selector) {
     const element = document.querySelector(selector);
     if (!element) {
@@ -14,8 +15,7 @@ const emptyState = requiredElement("#empty-state");
 const summary = requiredElement("#task-summary");
 const message = requiredElement("#form-message");
 const filterButtons = document.querySelectorAll("[data-filter]");
-let tasks = [];
-let activeFilter = "all";
+const taskStore = new TaskStore();
 const statusLabel = {
     todo: "To do",
     "in-progress": "In progress",
@@ -27,7 +27,8 @@ const nextAction = {
     done: "Completed",
 };
 function renderTasks() {
-    const visibleTasks = filterTasks(tasks, activeFilter);
+    const { tasks, filter } = taskStore.getSnapshot();
+    const visibleTasks = filterTasks(tasks, filter);
     list.replaceChildren();
     for (const task of visibleTasks) {
         list.append(createTaskCard({
@@ -52,10 +53,9 @@ form.addEventListener("submit", (event) => {
         input.focus();
         return;
     }
-    tasks = addTask(tasks, title);
+    taskStore.add(title);
     input.value = "";
     message.textContent = "";
-    renderTasks();
     input.focus();
 });
 list.addEventListener("click", (event) => {
@@ -67,8 +67,7 @@ list.addEventListener("click", (event) => {
     if (!taskId) {
         return;
     }
-    tasks = advanceTask(tasks, taskId);
-    renderTasks();
+    taskStore.advance(taskId);
 });
 filterButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -79,13 +78,12 @@ filterButtons.forEach((button) => {
             filter !== "done") {
             throw new Error(`Unsupported task filter: ${filter ?? "(missing)"}`);
         }
-        activeFilter = filter;
+        taskStore.setFilter(filter);
         filterButtons.forEach((filterButton) => {
             const isActive = filterButton === button;
             filterButton.classList.toggle("is-active", isActive);
             filterButton.setAttribute("aria-pressed", String(isActive));
         });
-        renderTasks();
     });
 });
-renderTasks();
+taskStore.subscribe(renderTasks);

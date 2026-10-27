@@ -1,5 +1,6 @@
-import { addTask, advanceTask, filterTasks, type Task, type TaskFilter, type TaskStatus } from "./model.js";
+import { filterTasks, type TaskStatus } from "./model.js";
 import { createTaskCard } from "./task-card.js";
+import { TaskStore } from "./state.js";
 
 function requiredElement<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -17,8 +18,7 @@ const summary = requiredElement<HTMLParagraphElement>("#task-summary");
 const message = requiredElement<HTMLParagraphElement>("#form-message");
 const filterButtons = document.querySelectorAll<HTMLButtonElement>("[data-filter]");
 
-let tasks: Task[] = [];
-let activeFilter: TaskFilter = "all";
+const taskStore = new TaskStore();
 
 const statusLabel: Record<TaskStatus, string> = {
   todo: "To do",
@@ -33,7 +33,8 @@ const nextAction: Record<TaskStatus, string> = {
 };
 
 function renderTasks(): void {
-  const visibleTasks = filterTasks(tasks, activeFilter);
+  const { tasks, filter } = taskStore.getSnapshot();
+  const visibleTasks = filterTasks(tasks, filter);
   list.replaceChildren();
 
   for (const task of visibleTasks) {
@@ -64,10 +65,9 @@ form.addEventListener("submit", (event: SubmitEvent) => {
     return;
   }
 
-  tasks = addTask(tasks, title);
+  taskStore.add(title);
   input.value = "";
   message.textContent = "";
-  renderTasks();
   input.focus();
 });
 
@@ -82,8 +82,7 @@ list.addEventListener("click", (event: MouseEvent) => {
     return;
   }
 
-  tasks = advanceTask(tasks, taskId);
-  renderTasks();
+  taskStore.advance(taskId);
 });
 
 filterButtons.forEach((button) => {
@@ -98,14 +97,13 @@ filterButtons.forEach((button) => {
       throw new Error(`Unsupported task filter: ${filter ?? "(missing)"}`);
     }
 
-    activeFilter = filter;
+    taskStore.setFilter(filter);
     filterButtons.forEach((filterButton) => {
       const isActive = filterButton === button;
       filterButton.classList.toggle("is-active", isActive);
       filterButton.setAttribute("aria-pressed", String(isActive));
     });
-    renderTasks();
   });
 });
 
-renderTasks();
+taskStore.subscribe(renderTasks);
