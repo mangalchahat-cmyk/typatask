@@ -1,5 +1,4 @@
 import { addTask, advanceTask, filterTasks } from "./model.js";
-import { createTaskCard } from "./task-card.js";
 function requiredElement(selector) {
     const element = document.querySelector(selector);
     if (!element) {
@@ -30,12 +29,30 @@ function renderTasks() {
     const visibleTasks = filterTasks(tasks, activeFilter);
     list.replaceChildren();
     for (const task of visibleTasks) {
-        list.append(createTaskCard({
-            task,
-            statusLabel: statusLabel[task.status],
-            actionLabel: nextAction[task.status],
-            completedLabel: "is completed",
-        }));
+        const item = document.createElement("li");
+        item.className = "task-item";
+        item.dataset.status = task.status;
+        const marker = document.createElement("span");
+        marker.className = "task-marker";
+        marker.setAttribute("aria-hidden", "true");
+        const content = document.createElement("div");
+        content.className = "task-content";
+        const title = document.createElement("p");
+        title.className = "task-title";
+        title.textContent = task.title;
+        const status = document.createElement("span");
+        status.className = "task-status";
+        status.textContent = statusLabel[task.status];
+        const advanceButton = document.createElement("button");
+        advanceButton.className = "advance-button";
+        advanceButton.type = "button";
+        advanceButton.dataset.taskId = task.id;
+        advanceButton.textContent = nextAction[task.status];
+        advanceButton.disabled = task.status === "done";
+        advanceButton.setAttribute("aria-label", task.status === "done" ? `${task.title} is completed` : `${nextAction[task.status]}: ${task.title}`);
+        content.append(title, status);
+        item.append(marker, content, advanceButton);
+        list.append(item);
     }
     emptyState.hidden = visibleTasks.length > 0;
     const remaining = tasks.filter((task) => task.status !== "done").length;
